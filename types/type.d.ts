@@ -62,6 +62,7 @@ declare interface ButtonProps extends TouchableOpacityProps {
   IconLeft?: FC;
   IconRight?: FC;
   className?: string;
+  btnW?: string;
 }
 
 declare interface GoogleInputProps {
