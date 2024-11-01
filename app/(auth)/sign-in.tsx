@@ -44,7 +44,7 @@ const SignIn = () => {
           />
         </View>
         <View className="px-5">
-          <CustomButton title="Sign In" onPress={OnSignInPress} />
+          <CustomButton title="Log In" onPress={OnSignInPress} />
           <OAuth />
         </View>
         <Link
