@@ -10,7 +10,7 @@ const SignUp = () => {
         <View className="relative w-full h-[250px]">
           <Image source={images.signUpCar} className="w-full h-[250px] z-0" />
           <Text className="text-2xl text-black font-JakartaSemiBold absolute bottom-2 left-5">
-            Create your account
+            Create your account Now
           </Text>
         </View>
       </View>
