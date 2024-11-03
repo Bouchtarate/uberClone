@@ -18,7 +18,6 @@ const InputField = ({
   icon,
   iconStyle,
   value,
-  onChangeText,
   className,
   secureTextEntry = false,
   ...props

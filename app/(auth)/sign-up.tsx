@@ -1,19 +1,72 @@
-import { View, Text, ScrollView, Image } from "react-native";
+import { View, Text, ScrollView, Image, Alert } from "react-native";
 import React, { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { images, icons } from "@/constants";
 import InputField from "@/components/InputField";
-import customButton from "@/components/CustomButton";
 import CustomButton from "@/components/CustomButton";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import OAuth from "@/components/OAuth";
+import { useSignUp } from "@clerk/clerk-expo";
+import ReactNativeModal from "react-native-modal";
 const SignUp = () => {
-  const OnSignUpPress = async () => {};
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
+  const { isLoaded, signUp, setActive } = useSignUp();
+  const router = useRouter();
+
+  const [verification, setVerification] = useState({
+    state: "default",
+    error: "",
+    code: "",
   });
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const onSignUpPress = async () => {
+    if (!isLoaded) {
+      return;
+    }
+    try {
+      await signUp.create({
+        emailAddress: email,
+        password: password,
+      });
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      setVerification({ ...verification, state: "pending" });
+    } catch (err: any) {
+      // console.error(JSON.stringify(err.errors, null, 2));
+      Alert.alert("Error", err.errors[0].longMessage);
+    }
+  };
+
+  const onPressVerify = async () => {
+    if (!isLoaded) {
+      return;
+    }
+
+    try {
+      const completeSignUp = await signUp.attemptEmailAddressVerification({
+        code: verification.code,
+      });
+
+      if (completeSignUp.status === "complete") {
+        await setActive({ session: completeSignUp.createdSessionId });
+        setVerification({ ...verification, state: "success" });
+        router.replace("/(root)/(tabs)/home");
+      } else {
+        setVerification({
+          ...verification,
+          state: "failed",
+          error: "Verification Failed",
+        });
+      }
+    } catch (err: any) {
+      setVerification({
+        ...verification,
+        state: "failed",
+        error: `Verification Failed ${err.errors[0].longMessages}`,
+      });
+    }
+  };
+
   return (
     <ScrollView className="flex-1 bg-white">
       <View className="flex-1 bg-white">
@@ -28,33 +81,31 @@ const SignUp = () => {
             label={"Name"}
             placeholder={"Entre your name"}
             icon={icons.person}
-            value={form.name}
-            onChangeText={(value) => {
-              setForm({ ...form, name: value });
-            }}
+            value={name}
+            onChangeText={(name) => setName(name)}
           />
           <InputField
             label={"Email"}
             placeholder={"Entre your email"}
             icon={icons.email}
-            value={form.email}
-            onChangeText={(value) => {
-              setForm({ ...form, email: value });
+            value={email}
+            onChangeText={(email) => {
+              setEmail(email);
             }}
           />
           <InputField
             label={"Password"}
             placeholder={"Entre your password"}
             icon={icons.lock}
-            value={form.password}
+            value={password}
             secureTextEntry={true}
-            onChangeText={(value) => {
-              setForm({ ...form, password: value });
+            onChangeText={(password) => {
+              setPassword(password);
             }}
           />
         </View>
         <View className="px-5">
-          <CustomButton title="Sign Up" onPress={OnSignUpPress} />
+          <CustomButton title="Sign Up" onPress={onSignUpPress} />
           <OAuth />
         </View>
         <Link
@@ -64,6 +115,60 @@ const SignUp = () => {
           <Text>Already have an account? </Text>
           <Text className="text-primary-500">Log In</Text>
         </Link>
+        <ReactNativeModal
+          isVisible={verification.state === "pending"}
+          onModalHide={() =>
+            setVerification({ ...verification, state: "success" })
+          }
+        >
+          <View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
+            <Text className="text-2xl font-JakartaExtraBold mb-2">
+              Verification
+            </Text>
+            <Text className="font-Jakarta mb-4">
+              We've sending verification code to {email}
+            </Text>
+            <InputField
+              label="Code"
+              icon={icons.lock}
+              placeholder="123456"
+              value={verification.code}
+              keyboardType="numeric"
+              onChangeText={(code) => {
+                setVerification({ ...verification, code });
+              }}
+            />
+            {verification.error && (
+              <Text className="text-red-500 text-sm mt-1">
+                {verification.code}
+              </Text>
+            )}
+            <CustomButton
+              title="Verify email"
+              className="mt-4 bg-success-500"
+              onPress={onPressVerify}
+            />
+          </View>
+        </ReactNativeModal>
+        <ReactNativeModal isVisible={verification.state === "success"}>
+          <View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
+            <Image
+              source={images.check}
+              className="w-[110px] h-[110px] mx-auto my-5"
+            />
+            <Text className="text-center font-JakartaBold text-3xl">
+              Verified
+            </Text>
+            <Text className="font-Jakarta text-center text-gray-400 text-base mt-2">
+              You have successfully verified your account.
+            </Text>
+            <CustomButton
+              title="Browse Home"
+              className="mt-5"
+              onPress={() => router.replace("/(root)/(tabs)/home")}
+            />
+          </View>
+        </ReactNativeModal>
       </View>
     </ScrollView>
   );
