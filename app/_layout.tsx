@@ -31,7 +31,9 @@ export default function RootLayout() {
     return null;
   }
   if (!publishableKey) {
-    throw new Error("Add EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY to your .env file");
+    throw new Error(
+      "Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env"
+    );
   }
   return (
     <ClerkProvider publishableKey={publishableKey}>
