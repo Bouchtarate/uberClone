@@ -86,7 +86,7 @@ const SignUp = () => {
           />
           <InputField
             label={"Email"}
-            placeholder={"Entre your email"}
+            placeholder={"Entre your Email"}
             icon={icons.email}
             value={email}
             onChangeText={(email) => {
