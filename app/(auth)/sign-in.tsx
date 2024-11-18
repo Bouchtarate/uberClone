@@ -16,17 +16,18 @@ const SignIn = () => {
     if (!isLoaded) {
       return;
     }
-
     try {
       const signInAttempt = await signIn.create({
         identifier: email,
-        password,
+        password: password,
       });
 
       if (signInAttempt.status === "complete") {
         await setActive({ session: signInAttempt.createdSessionId });
         router.replace("/");
       } else {
+        // See https://clerk.com/docs/custom-flows/error-handling
+        // for more info on error handling
         console.error(JSON.stringify(signInAttempt, null, 2));
       }
     } catch (err: any) {
@@ -65,7 +66,7 @@ const SignIn = () => {
           />
         </View>
         <View className="px-5">
-          <CustomButton title="Log In" onPress={() => onSignInPress} />
+          <CustomButton title="Log In" onPress={() => onSignInPress()} />
           <OAuth />
         </View>
         <Link
