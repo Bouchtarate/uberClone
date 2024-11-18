@@ -1,8 +1,18 @@
 import { SignedIn, SignedOut, useUser } from "@clerk/clerk-expo";
 import { Link } from "expo-router";
-import { FlatList, Text, View } from "react-native";
+import {
+  FlatList,
+  Text,
+  View,
+  Image,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import rideCard from "@/components/RideCard";
+import RideCard from "@/components/RideCard";
+import { icons, images } from "@/constants";
+import GoogleTextInput from "@/components/GoogleTextInput";
+import Maps from "@/components/Maps";
 const recentRids = [
   {
     ride_id: "1",
@@ -14,7 +24,7 @@ const recentRids = [
     destination_longitude: "83.985567",
     ride_time: 391,
     fare_price: "19500.00",
-    payment_status: "paid",
+    payment_status: "not paid",
     driver_id: 2,
     user_id: "1",
     created_at: "2024-08-12 05:19:20.620007",
@@ -113,11 +123,69 @@ const recentRids = [
 export default function Page() {
   const { user } = useUser();
 
+  const handleLogout = () => {};
+  const handleDestinationPress = () => {};
+  const loading = true;
   return (
     <SafeAreaView className="bg-general-500">
       <FlatList
         data={recentRids?.slice(0, 5)}
-        renderItem={({ item }) => <rideCard ride={item} />}
+        renderItem={({ item }) => <RideCard ride={item} />}
+        className="px-4"
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingBottom: 80 }}
+        ListEmptyComponent={() => (
+          <View className="flex flex-col items-center justify-center">
+            {!loading ? (
+              <>
+                <Image
+                  source={images.noResult}
+                  className="w-40 h-40"
+                  alt="No recent rides found"
+                  resizeMode="contain"
+                />
+                <Text className="text-sm font-JakartaLight">
+                  No recent rides found
+                </Text>
+              </>
+            ) : (
+              <ActivityIndicator size="large" color="#0286FF" />
+            )}
+          </View>
+        )}
+        ListHeaderComponent={() => (
+          <>
+            <View className="flex flex-row items-center justify-between my-4">
+              <Text className="text-xl font-JakartaExtraBold capitalize">
+                Welcome{", "}
+                {user?.firstName ??
+                  user?.emailAddresses[0].emailAddress.split("@")[0]}
+              </Text>
+              <TouchableOpacity
+                onPress={handleLogout}
+                className="justify-center items-center w-10 h-10 rounded-full bg-white"
+              >
+                <Image source={icons.out} className="w-4 h-4" />
+              </TouchableOpacity>
+            </View>
+            <GoogleTextInput
+              icon={icons.search}
+              containerStyle="bg-white shadow-md shadow-neutral-300"
+              handlePress={handleDestinationPress}
+            />
+            <>
+              <Text className="text-lg font-JakartaBold mt-4 mb-2">
+                Your current location
+              </Text>
+              <View className="flex flex-row items-center bg-transparent h-[300px]">
+                <Maps />
+              </View>
+            </>
+            <Text className="text-lg font-JakartaBold mt-4 mb-2">
+              Recent Rides
+            </Text>
+          </>
+        )}
       />
     </SafeAreaView>
   );
