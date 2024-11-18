@@ -7,6 +7,7 @@ import { Link, useRouter } from "expo-router";
 import OAuth from "@/components/OAuth";
 import { useSignUp } from "@clerk/clerk-expo";
 import ReactNativeModal from "react-native-modal";
+import { fetchAPI } from "@/lib/fetch";
 const SignUp = () => {
   const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
@@ -19,6 +20,7 @@ const SignUp = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const onSignUpPress = async () => {
     if (!isLoaded) {
       return;
@@ -47,9 +49,16 @@ const SignUp = () => {
       });
 
       if (completeSignUp.status === "complete") {
+        await fetchAPI("/(api)/user", {
+          method: "POST",
+          body: JSON.stringify({
+            name: name,
+            email: email,
+            clerkId: completeSignUp.createdUserId,
+          }),
+        });
         await setActive({ session: completeSignUp.createdSessionId });
         setVerification({ ...verification, state: "success" });
-        router.replace("/(root)/(tabs)/home");
       } else {
         setVerification({
           ...verification,
@@ -117,7 +126,7 @@ const SignUp = () => {
         <ReactNativeModal
           isVisible={verification.state === "pending"}
           onModalHide={() =>
-            setVerification({ ...verification, state: "success" })
+            verification.state === "success" && setShowSuccessModal(true)
           }
         >
           <View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
@@ -149,7 +158,7 @@ const SignUp = () => {
             />
           </View>
         </ReactNativeModal>
-        <ReactNativeModal isVisible={verification.state === "success"}>
+        <ReactNativeModal isVisible={showSuccessModal}>
           <View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
             <Image
               source={images.check}
@@ -164,7 +173,10 @@ const SignUp = () => {
             <CustomButton
               title="Browse Home"
               className="mt-5"
-              onPress={() => router.replace("/(root)/(tabs)/home")}
+              onPress={() => {
+                setShowSuccessModal(false);
+                router.replace("/(root)/(tabs)/home");
+              }}
             />
           </View>
         </ReactNativeModal>
