@@ -1,16 +1,39 @@
 import { View, Text, ScrollView, Image } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { images, icons } from "@/constants";
 import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import OAuth from "@/components/OAuth";
+import { useSignIn } from "@clerk/clerk-expo";
 const SignIn = () => {
-  const OnSignInPress = async () => {};
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
+  const { signIn, setActive, isLoaded } = useSignIn();
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const onSignInPress = useCallback(async () => {
+    if (!isLoaded) {
+      return;
+    }
+
+    try {
+      const signInAttempt = await signIn.create({
+        identifier: email,
+        password,
+      });
+
+      if (signInAttempt.status === "complete") {
+        await setActive({ session: signInAttempt.createdSessionId });
+        router.replace("/");
+      } else {
+        console.error(JSON.stringify(signInAttempt, null, 2));
+      }
+    } catch (err: any) {
+      console.error(JSON.stringify(err, null, 2));
+    }
+  }, [isLoaded, email, password]);
+
   return (
     <ScrollView className="flex-1 bg-white">
       <View className="flex-1 bg-white">
@@ -25,24 +48,24 @@ const SignIn = () => {
             label={"Email"}
             placeholder={"Entre your email"}
             icon={icons.email}
-            value={form.email}
+            value={email}
             onChangeText={(value) => {
-              setForm({ ...form, email: value });
+              setEmail(value);
             }}
           />
           <InputField
             label={"Password"}
             placeholder={"Entre your password"}
             icon={icons.lock}
-            value={form.password}
+            value={password}
             secureTextEntry={true}
             onChangeText={(value) => {
-              setForm({ ...form, password: value });
+              setPassword(value);
             }}
           />
         </View>
         <View className="px-5">
-          <CustomButton title="Log In" onPress={OnSignInPress} />
+          <CustomButton title="Log In" onPress={() => onSignInPress} />
           <OAuth />
         </View>
         <Link
